@@ -2,6 +2,9 @@
 #define GEOMLIB_GEOM_H
 
 #include <cmath>
+#include <assert.h>
+#include <stdexcept>
+
 static const double STANDART_PRECISION = 0.000001;
 
 class Vector2D {
@@ -10,6 +13,10 @@ public:
 
     Vector2D(Vector2D from, Vector2D to) {
         *this = to - from;
+    }
+
+    double length() const {
+        return sqrt(x * x + y * y);
     }
 
     Vector2D operator+(Vector2D other) {
@@ -52,18 +59,29 @@ public:
 class Geom {
 public:
     static double pointToSegmentDist(Point point, Segment segment);
-    static double pointToLineDist(Point point, Vector2D dirVector);
+    static double pointToLineDist(Point point, Point lp1, Point lp2) ;
 };
 
-double Geom::pointToLineDist(Point point, Vector2D dirVe) {
-    return 0;
+double Geom::pointToLineDist(Point point, Point lp1, Point lp2) {
+    Vector2D dirVector(lp1, lp2);
+    if (dirVector.length() == 0) {
+        throw  std::invalid_argument("Direction vector in null.");
+    }
+    return Vector2D::exteriorProd(dirVector, point - lp1) / dirVector.length();
 }
 
 double Geom::pointToSegmentDist(Point point, Segment segment) {
-    Vector2D ab(segment.b, segment.a);
+    Vector2D ab(segment.a, segment.b);
     Vector2D ap(segment.a, point);
     Vector2D bp(segment.b, point);
-    return 0;
+
+    if (Vector2D::scalarProd(ab, ap) <= 0) {
+        return ap.length();
+    }
+    if (Vector2D::scalarProd(ab, bp) >= 0) {
+        return bp.length();
+    }
+    return pointToLineDist(point, segment.a, segment.b);
 }
 
 
