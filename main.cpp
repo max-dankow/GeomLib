@@ -1,10 +1,14 @@
 #include <iostream>
+#include <fstream>
 #include "Geom.h"
 
 int main() {
-    Segment segment(Point(0, 4), Point(2, 3));
-    Point point(2, 5);
-    std::cout << Geom::pointToSegmentDist(point, segment);
+    std::ifstream input("distance4.in");
+    std::ofstream output("distance4.out");
+    Point point;
+    Segment segment;
+    input >> point.x >> point.y >> segment.a.x >> segment.a.y >> segment.b.x >> segment.b.y;
+    output << Geom::pointToSegmentDist(point, segment) << std::endl;
     return 0;
 }
 

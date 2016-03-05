@@ -9,7 +9,7 @@ static const double STANDART_PRECISION = 0.000001;
 
 class Vector2D {
 public:
-    Vector2D(double x, double y) : x(x), y(y) { }
+    Vector2D(double x = 0, double y = 0) : x(x), y(y) { }
 
     Vector2D(Vector2D from, Vector2D to) {
         *this = to - from;
@@ -42,8 +42,8 @@ public:
     bool operator!=(const Vector2D &other) const {
         return !(*this == other);
     }
-private:
-    double x,y;
+
+    double x, y;
 };
 
 typedef Vector2D Point;
@@ -52,6 +52,7 @@ class Segment {
 
 public:
     Segment(const Point &a, const Point &b) : a(a), b(b) { }
+    Segment() {}
 
     Point a, b;
 };
