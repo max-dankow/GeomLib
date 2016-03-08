@@ -7,9 +7,10 @@
 
 static const double STANDART_PRECISION = 0.000001;
 
+template<typename T>
 class Vector2D {
 public:
-    Vector2D(double x = 0, double y = 0) : x(x), y(y) { }
+    Vector2D(T x = 0, T y = 0) : x(x), y(y) { }
 
     Vector2D(Vector2D from, Vector2D to) {
         *this = to - from;
@@ -27,11 +28,11 @@ public:
         return Vector2D(this->x - other.x, this->y - other.y);
     }
 
-    static double exteriorProd(const Vector2D &a, const Vector2D &b) {
+    static T exteriorProd(const Vector2D &a, const Vector2D &b) {
         return a.x * b.y - a.y * b.x;
     }
 
-    static double scalarProd(const Vector2D &a, const Vector2D &b) {
+    static T scalarProd(const Vector2D &a, const Vector2D &b) {
         return a.x * b.x + a.y * b.y;
     }
 
@@ -43,43 +44,46 @@ public:
         return !(*this == other);
     }
 
-    double x, y;
+    T x, y;
 };
 
-typedef Vector2D Point;
-
+template<typename T>
 class Segment {
-
 public:
-    Segment(const Point &a, const Point &b) : a(a), b(b) { }
-    Segment() {}
+    Segment(const Vector2D<T > &a, const Vector2D<T > &b) : a(a), b(b) { }
 
-    Point a, b;
+    Segment() { }
+
+    Vector2D<T> a, b;
 };
 
+template<typename T>
 class Geom {
 public:
-    static double pointToSegmentDist(Point point, Segment segment);
-    static double pointToLineDist(Point point, Point lp1, Point lp2) ;
+    static double pointToSegmentDist(Vector2D<T> point, Segment<T> segment);
+
+    static double pointToLineDist(Vector2D<T> point, Vector2D<T> lp1, Vector2D<T> lp2);
 };
 
-double Geom::pointToLineDist(Point point, Point lp1, Point lp2) {
-    Vector2D dirVector(lp1, lp2);
+template <typename T>
+double Geom<T>::pointToLineDist(Vector2D<T> point, Vector2D<T> lp1, Vector2D<T> lp2) {
+    Vector2D<T> dirVector(lp1, lp2);
     if (dirVector.length() == 0) {
-        throw  std::invalid_argument("Direction vector in null.");
+        throw std::invalid_argument("Direction vector in null.");
     }
-    return Vector2D::exteriorProd(dirVector, point - lp1) / dirVector.length();
+    return Vector2D<T>::exteriorProd(dirVector, point - lp1) / dirVector.length();
 }
 
-double Geom::pointToSegmentDist(Point point, Segment segment) {
-    Vector2D ab(segment.a, segment.b);
-    Vector2D ap(segment.a, point);
-    Vector2D bp(segment.b, point);
+template <typename T>
+double Geom<T>::pointToSegmentDist(Vector2D<T> point, Segment<T> segment) {
+    Vector2D<T> ab(segment.a, segment.b);
+    Vector2D<T> ap(segment.a, point);
+    Vector2D<T> bp(segment.b, point);
 
-    if (Vector2D::scalarProd(ab, ap) <= 0) {
+    if (Vector2D<T>::scalarProd(ab, ap) <= 0) {
         return ap.length();
     }
-    if (Vector2D::scalarProd(ab, bp) >= 0) {
+    if (Vector2D<T>::scalarProd(ab, bp) >= 0) {
         return bp.length();
     }
     return pointToLineDist(point, segment.a, segment.b);
