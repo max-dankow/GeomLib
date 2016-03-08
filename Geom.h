@@ -4,6 +4,7 @@
 #include <cmath>
 #include <assert.h>
 #include <stdexcept>
+#include <iostream>
 
 static const double STANDART_PRECISION = 0.000001;
 
@@ -52,21 +53,41 @@ class Segment {
 
 public:
     Segment(const Point &a, const Point &b) : a(a), b(b) { }
-    Segment() {}
+
+    Segment() { }
 
     Point a, b;
 };
 
+class Line {
+public:
+    Line(double a = 0, double b = 0, double c = 0) : a(a), b(b), c(c) { }
+
+    double a, b, c;
+};
+
+std::istream &operator>>(std::istream &input, Line &line) {
+    double a, b, c;
+    input >> a >> b >> c;
+    line.a = a;
+    line.b = b;
+    line.c = c;
+    return input;
+}
+
 class Geom {
 public:
     static double pointToSegmentDist(Point point, Segment segment);
-    static double pointToLineDist(Point point, Point lp1, Point lp2) ;
+
+    static double pointToLineDist(Point point, Point lp1, Point lp2);
+
+    static Point linesIntersection(const Line &firstLine, const Line &secondLine);
 };
 
 double Geom::pointToLineDist(Point point, Point lp1, Point lp2) {
     Vector2D dirVector(lp1, lp2);
     if (dirVector.length() == 0) {
-        throw  std::invalid_argument("Direction vector in null.");
+        throw std::invalid_argument("Direction vector in null");
     }
     return Vector2D::exteriorProd(dirVector, point - lp1) / dirVector.length();
 }
@@ -83,6 +104,17 @@ double Geom::pointToSegmentDist(Point point, Segment segment) {
         return bp.length();
     }
     return pointToLineDist(point, segment.a, segment.b);
+}
+
+Vector2D Geom::linesIntersection(const Line &firstLine, const Line &secondLine) {
+    Point result;
+    double denominator = firstLine.a * secondLine.b - secondLine.a * firstLine.b;
+    if (fabs(denominator) < STANDART_PRECISION) {
+        throw std::invalid_argument("Lines are parallel");
+    }
+    result.x = -(firstLine.c * secondLine.b - secondLine.c * firstLine.b) / denominator;
+    result.y = -(firstLine.a * secondLine.c - secondLine.a * firstLine.c) / denominator;
+    return result;
 }
 
 
