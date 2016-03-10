@@ -82,6 +82,8 @@ public:
     static double pointToLineDist(Point point, Point lp1, Point lp2);
 
     static Point linesIntersection(const Line &firstLine, const Line &secondLine);
+
+    static double signedArea(const std::vector<Vector2D> &points);
 };
 
 double Geom::pointToLineDist(Point point, Point lp1, Point lp2) {
@@ -117,5 +119,15 @@ Vector2D Geom::linesIntersection(const Line &firstLine, const Line &secondLine) 
     return result;
 }
 
+double Geom::signedArea(const std::vector<Vector2D> &points) {
+    if (points.empty()) {
+        return 0;
+    }
+    double sum = (points.back().x + points.front().x) * (points.back().y - points.front().y);
+    for (size_t i = 0; i < points.size() - 1; ++i) {
+        sum += (points[i].x + points[i + 1].x) * (points[i].y - points[i + 1].y);
+    }
+    return sum / 2;
+}
 
 #endif //GEOMLIB_GEOM_H
