@@ -26,7 +26,7 @@ TEST(Vector, Comparation) {
 TEST(PointToLineDist, PointToLineDist) {
     ASSERT_EQ(0, Geom::pointToLineDist(Vector2D(10, 0), Vector2D(0, 0), Vector2D(1.9, 0)));
     ASSERT_EQ(0, Geom::pointToLineDist(Vector2D(10, 1), Vector2D(0, 0), Vector2D(10, 1)));
-    ASSERT_EQ(-1, Geom::pointToLineDist(Vector2D(10, -1), Vector2D(0, 0), Vector2D(1.98, 0)));
+    ASSERT_EQ(1, Geom::pointToLineDist(Vector2D(10, -1), Vector2D(0, 0), Vector2D(1.98, 0)));
     ASSERT_EQ(16, Geom::pointToLineDist(Vector2D(10, 16), Vector2D(0, 0), Vector2D(0.3, 0)));
     ASSERT_EQ(2, Geom::pointToLineDist(Vector2D(2, 7), Vector2D(2, 5), Vector2D(4, 5)));
     ASSERT_EQ(0, Geom::pointToLineDist(Vector2D(0, 5), Vector2D(2, 5), Vector2D(4, 5)));
@@ -34,6 +34,7 @@ TEST(PointToLineDist, PointToLineDist) {
 }
 
 TEST(PointToSegmentDist, PointToSegmentDist) {
+    ASSERT_EQ(1, Geom::pointToSegmentDist(Vector2D(1, 5), Segment(Vector2D(0, 0), Vector2D(0, 10))));
     ASSERT_EQ(2.0, Geom::pointToSegmentDist(Vector2D(0, 4), Segment(Vector2D(2, 3), Vector2D(2, 5))));
     ASSERT_EQ(0, Geom::pointToSegmentDist(Vector2D(2, 3), Segment(Vector2D(2, 3), Vector2D(2, 5))));
     ASSERT_EQ(5, Geom::pointToSegmentDist(Vector2D(5, 9), Segment(Vector2D(2, 3), Vector2D(2, 5))));
@@ -44,6 +45,7 @@ TEST(PointToSegmentDist, PointToSegmentDist) {
     ASSERT_EQ(5, Geom::pointToSegmentDist(Vector2D(5, 1), Segment(Vector2D(2, 5), Vector2D(2, 5))));
     ASSERT_EQ(0, Geom::pointToSegmentDist(Vector2D(2, 5), Segment(Vector2D(2, 5), Vector2D(2, 5))));
     ASSERT_EQ(1, Geom::pointToSegmentDist(Vector2D(3, 5), Segment(Vector2D(2, 5), Vector2D(2, 5))));
+    ASSERT_TRUE(fabs(Geom::pointToSegmentDist(Vector2D(-1, 0), Segment(Vector2D(0, 1), Vector2D(2, 3))) - 1.414213562) < 1.e-7);
 }
 
 int main(int argc, char **argv) {
