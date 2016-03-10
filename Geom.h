@@ -5,8 +5,9 @@
 #include <assert.h>
 #include <stdexcept>
 #include <iostream>
+#include <vector>
 
-static const double STANDART_PRECISION = 0.000001;
+static const double STANDART_PRECISION = 1e-7;
 
 class Vector2D {
 public:
@@ -84,6 +85,8 @@ public:
     static Point linesIntersection(const Line &firstLine, const Line &secondLine);
 
     static double signedArea(const std::vector<Vector2D> &points);
+
+    static bool isConvex(const std::vector<Vector2D> &points);
 };
 
 double Geom::pointToLineDist(Point point, Point lp1, Point lp2) {
@@ -128,6 +131,37 @@ double Geom::signedArea(const std::vector<Vector2D> &points) {
         sum += (points[i].x + points[i + 1].x) * (points[i].y - points[i + 1].y);
     }
     return sum / 2;
+}
+
+bool Geom::isConvex(const std::vector<Vector2D> &points) {
+    if (points.size() < 3) {
+        throw std::invalid_argument("Polygon is empty");
+    }
+    bool positive = false, negative = false;
+
+    for (size_t i = 0; i < points.size(); ++i) {
+        Vector2D prevEdge(points[i % points.size()], points[(i + 1) % points.size()]);
+        Vector2D nextEdge(points[(i + 1) % points.size()], points[(i + 2) % points.size()]);
+        double prod = Vector2D::exteriorProd(prevEdge, nextEdge);
+        if (fabs(prod) < STANDART_PRECISION) {
+            continue;
+        }
+        if (prod > 0) {
+            positive = true;
+        }
+        if (prod < 0) {
+            negative = true;
+        }
+        if (positive && negative) {
+            return false;
+        }
+    }
+
+    if (positive || negative) {
+        return true;
+    } else {
+        throw std::invalid_argument("Polygon is a line");
+    }
 }
 
 #endif //GEOMLIB_GEOM_H

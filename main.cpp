@@ -4,11 +4,9 @@
 #include <vector>
 #include "Geom.h"
 
-
-
 int main() {
-    std::ifstream input("area.in");
-    std::ofstream output("area.out");
+    std::ifstream input("polygon.in");
+    std::ofstream output("polygon.out");
     size_t pointNumber;
     input >> pointNumber;
     std::vector<Vector2D> points;
@@ -19,7 +17,8 @@ int main() {
         input >> x >> y;
         points.push_back(Vector2D(x, y));
     }
-    output << std::fixed << std::setprecision(10) << Geom::signedArea(points) << std::endl;
+//    if ()
+    output << std::fixed << std::setprecision(10) << (Geom::isConvex(points) ? "YES" : "NO") << std::endl;
     return 0;
 }
 
