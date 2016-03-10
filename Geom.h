@@ -6,6 +6,8 @@
 #include <stdexcept>
 #include <iostream>
 #include <vector>
+#include <algorithm>
+#include <stack>
 
 static const double STANDART_PRECISION = 1e-7;
 
@@ -21,11 +23,11 @@ public:
         return sqrt(x * x + y * y);
     }
 
-    Vector2D operator+(Vector2D other) {
+    Vector2D operator+(Vector2D other) const {
         return Vector2D(this->x + other.x, this->y + other.y);
     }
 
-    Vector2D operator-(Vector2D other) {
+    Vector2D operator-(Vector2D other) const {
         return Vector2D(this->x - other.x, this->y - other.y);
     }
 
@@ -87,6 +89,8 @@ public:
     static double signedArea(const std::vector<Vector2D> &points);
 
     static bool isConvex(const std::vector<Vector2D> &points);
+
+    static std::vector<Point> getHull(const std::vector<Vector2D> &points);
 };
 
 double Geom::pointToLineDist(Point point, Point lp1, Point lp2) {
@@ -162,6 +166,81 @@ bool Geom::isConvex(const std::vector<Vector2D> &points) {
     } else {
         throw std::invalid_argument("Polygon is a line");
     }
+}
+
+double rotate(Vector2D a, Vector2D b, Vector2D c) {
+    return Vector2D::exteriorProd(b - a, c - a);
+}
+
+std::vector<Vector2D> removeOnLinePoints(std::vector<Vector2D> &polygon) {
+    std::vector<Vector2D> result;
+    result.reserve(polygon.size());
+    std::vector<bool> toDelete(polygon.size(), false);
+    for (size_t i = 0; i < polygon.size(); ++i) {
+        Vector2D prevEdge(polygon[i % polygon.size()], polygon[(i + 1) % polygon.size()]);
+        Vector2D nextEdge(polygon[(i + 1) % polygon.size()], polygon[(i + 2) % polygon.size()]);
+        double prod = Vector2D::exteriorProd(prevEdge, nextEdge);
+        // Если три последовательные точки лежат на прямой, то удалаем среднюю.
+        if (fabs(prod) < STANDART_PRECISION) {
+            toDelete[(i + 1) % polygon.size()] = true;
+        }
+    }
+    for (size_t i = 0; i < polygon.size(); ++i) {
+        if (!toDelete[i]) {
+            result.push_back(polygon[i]);
+        }
+    }
+    return result;
+}
+
+std::vector<Point> Geom::getHull(const std::vector<Vector2D> &points) {
+    if (points.size() < 3) {
+        return points;
+    }
+    // Список номеров точек.
+    std::vector<size_t> indices(points.size());
+    for (size_t i = 0; i < points.size(); ++i) {
+        indices[i] = i;
+    }
+    // Ищем самую нижнюю левую точку, помещаем ее в начало списка.
+    size_t minIndex = 0;
+    for (size_t i = 0; i < indices.size(); ++i) {
+        if ((points[i].y < points[minIndex].y)
+            || ((points[i].y == points[minIndex].y) && (points[i].x < points[minIndex].x)) ) {
+            minIndex = i;
+        }
+    }
+    std::swap(indices[minIndex], indices[0]);
+    // Сортируем все точки, кроме выбранной, по полярному углу.
+    std::sort(indices.begin() + 1, indices.end(), [&] (size_t a, size_t b) -> bool{
+        return (rotate(points[indices[0]], points[a], points[b]) > 0)
+                || ((fabs(rotate(points[indices[0]], points[a], points[b])) < STANDART_PRECISION)
+                    && ((points[a] - points[indices[0]]).length() < (points[b] - points[indices[0]]).length()));
+    });
+    // Срезаем углы.
+    std::vector<size_t> stack;
+    stack.reserve(points.size());
+    stack.push_back(indices[0]);
+    stack.push_back(indices[1]);
+
+    for (size_t i = 2; i < indices.size(); ++i) {
+        size_t size = stack.size();
+        while ((rotate(points[stack[size - 2]], points[stack[size - 1]], points[indices[i]]) <= 0)) {
+               // || ((fabs(rotate(points[stack[size - 2]], points[stack[size - 1]], points[indices[i]])) < STANDART_PRECISION))) {
+            stack.pop_back();
+            size = stack.size();
+            if (size < 2) {
+                break;
+            }
+        }
+        stack.push_back(indices[i]);
+    }
+    std::vector<Vector2D> hull;
+    hull.reserve(stack.size());
+    for (size_t i : stack) {
+        hull.push_back(points[i]);
+    }
+    return hull;//removeOnLinePoints(hull);
 }
 
 #endif //GEOMLIB_GEOM_H
