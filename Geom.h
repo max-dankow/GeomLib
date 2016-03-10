@@ -30,6 +30,10 @@ public:
         return Vector2D(this->x - other.x, this->y - other.y);
     }
 
+    Vector2D operator*(double k) const {
+        return Vector2D(this->x * k, this->y * k);
+    }
+
     static double exteriorProd(const Vector2D &a, const Vector2D &b) {
         return a.x * b.y - a.y * b.x;
     }
@@ -109,8 +113,7 @@ double Geom::pointToSegmentDist(Point point, Segment segment) {
         return (point - segment.a).length();
     }
 
-    if (segment.a == point || segment.b ==point)
-    {
+    if (segment.a == point || segment.b == point) {
         return 0;
     }
 
@@ -214,16 +217,16 @@ std::vector<Point> Geom::getHull(const std::vector<Vector2D> &points) {
     size_t minIndex = 0;
     for (size_t i = 0; i < indices.size(); ++i) {
         if ((points[i].y < points[minIndex].y)
-            || ((points[i].y == points[minIndex].y) && (points[i].x < points[minIndex].x)) ) {
+            || ((points[i].y == points[minIndex].y) && (points[i].x < points[minIndex].x))) {
             minIndex = i;
         }
     }
     std::swap(indices[minIndex], indices[0]);
     // Сортируем все точки, кроме выбранной, по полярному углу.
-    std::sort(indices.begin() + 1, indices.end(), [&] (size_t a, size_t b) -> bool{
+    std::sort(indices.begin() + 1, indices.end(), [&](size_t a, size_t b) -> bool {
         return (rotate(points[indices[0]], points[a], points[b]) > 0)
-                || ((fabs(rotate(points[indices[0]], points[a], points[b])) < STANDART_PRECISION)
-                    && ((points[a] - points[indices[0]]).length() < (points[b] - points[indices[0]]).length()));
+               || ((fabs(rotate(points[indices[0]], points[a], points[b])) < STANDART_PRECISION)
+                   && ((points[a] - points[indices[0]]).length() < (points[b] - points[indices[0]]).length()));
     });
     // Срезаем углы.
     std::vector<size_t> stack;
@@ -234,7 +237,7 @@ std::vector<Point> Geom::getHull(const std::vector<Vector2D> &points) {
     for (size_t i = 2; i < indices.size(); ++i) {
         size_t size = stack.size();
         while ((rotate(points[stack[size - 2]], points[stack[size - 1]], points[indices[i]]) <= 0)) {
-               // || ((fabs(rotate(points[stack[size - 2]], points[stack[size - 1]], points[indices[i]])) < STANDART_PRECISION))) {
+            // || ((fabs(rotate(points[stack[size - 2]], points[stack[size - 1]], points[indices[i]])) < STANDART_PRECISION))) {
             stack.pop_back();
             size = stack.size();
             if (size < 2) {
