@@ -10,11 +10,13 @@
 
 static const double STANDART_PRECISION = 1e-7;
 
+class Segment;
+
 class Vector2D {
 public:
     Vector2D(double x = 0, double y = 0) : x(x), y(y) { }
 
-    Vector2D(Vector2D from, Vector2D to) {
+    Vector2D(const Vector2D &from, const Vector2D &to) {
         *this = to - from;
     }
 
@@ -50,6 +52,8 @@ public:
         return !(*this == other);
     }
 
+    bool belongsTo(const Segment &segment) const;
+
     double x, y;
 };
 
@@ -58,12 +62,39 @@ typedef Vector2D Point;
 class Segment {
 
 public:
-    Segment(const Point &a, const Point &b) : a(a), b(b) { }
+    Segment(const Vector2D &first, const Vector2D &second) : first(first), second(second) { }
+
+    Segment(double x1, double y1, double x2, double y2) : first(Vector2D(x1, y1)), second(Vector2D(x2, y2)) { }
 
     Segment() { }
 
-    Point a, b;
+    const Vector2D &a() const {
+        return first;
+    }
+
+    const Vector2D &b() const {
+        return second;
+    }
+
+
+    void setFirst(const Vector2D &first) {
+        this->first = first;
+    }
+
+    void setSecond(const Vector2D &second) {
+        this->second = second;
+    }
+
+private:
+    Vector2D first, second;
 };
+
+bool Vector2D::belongsTo(const Segment &segment) const {
+    Vector2D pa(*this, segment.a());
+    Vector2D pb(*this, segment.b());
+    return (fabs(exteriorProd(pa, pb)) < STANDART_PRECISION
+            && scalarProd(pa, pb) <= 0);
+}
 
 class Line {
 public:
@@ -81,6 +112,47 @@ std::istream &operator>>(std::istream &input, Line &line) {
     return input;
 }
 
+std::istream &operator>>(std::istream &input, Point &point) {
+    double x, y;
+    input >> x >> y;
+    point.x = x;
+    point.y = y;
+    return input;
+}
+
+std::istream &operator>>(std::istream &input, Segment &segment) {
+    Point a, b;
+    input >> a >> b;
+    segment.setFirst(a);
+    segment.setSecond(b);
+    return input;
+}
+
+template<typename T>
+class Optional {
+public:
+
+    Optional(T value) : valueExists(true), value(value) { }
+
+    Optional() : valueExists(false) { }
+
+    bool some(T &result) {
+        if (valueExists) {
+            result = value;
+            return true;
+        }
+        return false;
+    }
+
+    bool none() {
+        return !valueExists;
+    }
+
+private:
+    bool valueExists;
+    T value;
+};
+
 class Geom {
 public:
     static double pointToSegmentDist(Point point, Segment segment);
@@ -88,6 +160,8 @@ public:
     static double pointToLineDist(Point point, Point lp1, Point lp2);
 
     static Point linesIntersection(const Line &firstLine, const Line &secondLine);
+
+    static bool areSegmentsIntersect(const Segment &first, const Segment &second);
 
     static double signedArea(const std::vector<Vector2D> &points);
 
@@ -105,15 +179,15 @@ double Geom::pointToLineDist(Point point, Point lp1, Point lp2) {
 }
 
 double Geom::pointToSegmentDist(Point point, Segment segment) {
-    Vector2D ab(segment.a, segment.b);
-    Vector2D ap(segment.a, point);
-    Vector2D bp(segment.b, point);
+    Vector2D ab(segment.a(), segment.b());
+    Vector2D ap(segment.a(), point);
+    Vector2D bp(segment.b(), point);
 
-    if (segment.a == segment.b) {
-        return (point - segment.a).length();
+    if (segment.a() == segment.b()) {
+        return (point - segment.a()).length();
     }
 
-    if (segment.a == point || segment.b == point) {
+    if (segment.a() == point || segment.b() == point) {
         return 0;
     }
 
@@ -123,7 +197,7 @@ double Geom::pointToSegmentDist(Point point, Segment segment) {
     if (Vector2D::scalarProd(ab, bp) >= 0) {
         return bp.length();
     }
-    return pointToLineDist(point, segment.a, segment.b);
+    return pointToLineDist(point, segment.a(), segment.b());
 }
 
 Vector2D Geom::linesIntersection(const Line &firstLine, const Line &secondLine) {
@@ -135,6 +209,39 @@ Vector2D Geom::linesIntersection(const Line &firstLine, const Line &secondLine) 
     result.x = -(firstLine.c * secondLine.b - secondLine.c * firstLine.b) / denominator;
     result.y = -(firstLine.a * secondLine.c - secondLine.a * firstLine.c) / denominator;
     return result;
+}
+
+bool Geom::areSegmentsIntersect(const Segment &first, const Segment &second) {
+    double denominator =
+            (second.b().y - second.a().y) * (first.b().x - first.a().x)
+            - (second.b().x - second.a().x) * (first.b().y - first.a().y);
+    if (fabs(denominator) < STANDART_PRECISION) {
+        // Отрезки параллельны - они могут персекаться только если лежат на одной прямой.
+
+        if (first.a() == first.b() && second.a() == second.b()) {
+            // Отрезки - две вырожденные точки.
+            return first.a() == second.a();
+        }
+
+        if (first.a() != first.b()) {
+            // first не вырожден.
+            return  second.a().belongsTo(first) || second.b().belongsTo(first);
+        }
+
+        if (second.a() != second.b()) {
+            // second не вырожден.
+            return  first.a().belongsTo(second) || first.b().belongsTo(second);
+        }
+    }
+    // Отрезки точно не вырождены.
+    double ua = (second.b().x - second.a().x) * (first.a().y - second.a().y)
+                - (second.b().y - second.a().y) * (first.a().x - second.a().x);
+    ua /= denominator;
+    double ub = (first.b().x - first.a().x) * (first.a().y - second.a().y)
+                - (first.b().y - first.a().y) * (first.a().x - second.a().x);
+    ub /= denominator;
+
+    return (ua >= 0 && ua <= 1 && ub >= 0 && ub <= 1);
 }
 
 double Geom::signedArea(const std::vector<Vector2D> &points) {

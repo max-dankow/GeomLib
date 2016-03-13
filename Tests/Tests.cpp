@@ -48,6 +48,52 @@ TEST(PointToSegmentDist, PointToSegmentDist) {
     ASSERT_TRUE(fabs(Geom::pointToSegmentDist(Vector2D(-1, 0), Segment(Vector2D(0, 1), Vector2D(2, 3))) - 1.414213562) < 1.e-7);
 }
 
+TEST(OptionalType, General) {
+    Optional<int> optEmpty;
+    ASSERT_TRUE(optEmpty.none());
+    int result = 0;
+    ASSERT_FALSE(optEmpty.some(result));
+    ASSERT_EQ(0, result);
+
+    Optional<int> opt(0xFF);
+    ASSERT_FALSE(opt.none());
+    ASSERT_TRUE(opt.some(result));
+    ASSERT_EQ(0xFF, result);
+}
+
+TEST(SegmentsIntersection, Trivial) {
+    // Две точки.
+    ASSERT_TRUE((Geom::areSegmentsIntersect(Segment(9, 9, 9, 9), Segment(9, 9, 9, 9))));
+    ASSERT_FALSE((Geom::areSegmentsIntersect(Segment(9, 9, 9, 9), Segment(9.5, 9.5, 9.5, 9.5))));
+    // Точка и отрезок.
+    ASSERT_TRUE((Geom::areSegmentsIntersect(Segment(0, 0, 3, 1), Segment(1, 0.3333333333, 1, 0.3333333333))));
+    ASSERT_FALSE((Geom::areSegmentsIntersect(Segment(0, 0, 3, 1), Segment(1, -0.3333333333, 1, -0.3333333333))));
+    ASSERT_FALSE((Geom::areSegmentsIntersect(Segment(0, 0, 3, 1), Segment(1, 1.3333333333, 1, 1.3333333333))));
+    ASSERT_TRUE((Geom::areSegmentsIntersect(Segment(0, 0, 3, 1), Segment(0, 0, 0, 0))));
+    // Параллельные.
+    ASSERT_FALSE((Geom::areSegmentsIntersect(Segment(2, 2, -1, -1), Segment(2, 3, -1, 0))));
+    ASSERT_FALSE((Geom::areSegmentsIntersect(Segment(2, 2, -1, -1), Segment(3, 3, 3.1, 3.1))));
+    ASSERT_TRUE((Geom::areSegmentsIntersect(Segment(2, 2, -1, -1), Segment(-1, -1, 0, 0))));
+    ASSERT_TRUE((Geom::areSegmentsIntersect(Segment(2, 2, -1, -1), Segment(-1, -1, -10, -10))));
+}
+
+TEST(SegmentsIntersection, NotTrivial) {
+    ASSERT_TRUE((Geom::areSegmentsIntersect(Segment(5, 1, 2, 6), Segment(1, 1, 7, 8))));
+    ASSERT_TRUE((Geom::areSegmentsIntersect(Segment(5, 1, 2, 6), Segment(1, 1, 2, 6))));
+    ASSERT_TRUE((Geom::areSegmentsIntersect(Segment(-3, 0, 0, 1), Segment(0, -1, 0, 10))));
+
+    ASSERT_FALSE((Geom::areSegmentsIntersect(Segment(5, 1, 2, 6), Segment(1, 1, 3, 4))));
+    ASSERT_FALSE((Geom::areSegmentsIntersect(Segment(-3, 0, 0, 1), Segment(0, -1, 0, -10))));
+    ASSERT_FALSE((Geom::areSegmentsIntersect(Segment(-3, 0, 0, 1), Segment(0, -1, 0.1, 1))));
+}
+
+TEST(BelongsToSegment, General) {
+    ASSERT_TRUE(Vector2D(1, 1).belongsTo(Segment(0, 0, 1, 1)));
+    ASSERT_FALSE(Vector2D(1, 1).belongsTo(Segment(0, 0, .1, .1)));
+    ASSERT_TRUE(Vector2D(1, 1).belongsTo(Segment(1, -10, 1, 10)));
+    ASSERT_FALSE(Vector2D(0, 1.1).belongsTo(Segment(1, -10, 1, 10)));
+}
+
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();

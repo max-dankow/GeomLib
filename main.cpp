@@ -16,7 +16,7 @@ void solveTanget(Vector2D point, Vector2D center, long radius, std::ostream &out
         output << 0;
         return;
     }
-    // Точка все окружности.
+    // Точка вне окружности.
     double R = (point - center).length();
     double l = sqrt(R * R - radius * radius);
     double h = l * radius / R;
@@ -36,13 +36,11 @@ void solveTanget(Vector2D point, Vector2D center, long radius, std::ostream &out
 }
 
 int main() {
-    std::ifstream input("tangent.in");
-    std::ofstream output("tangent.out");
-    Vector2D point, center;
-    long radius;
-    input >> center.x >> center.y >> radius >> point.x >> point.y;
-    output << std::setprecision(10);
-    solveTanget(point, center, radius, output);
+    std::ifstream input("intersec2.in");
+    std::ofstream output("intersec2.out");
+    Segment s1, s2;
+    input >> s1 >> s2;
+    output << std::setprecision(10) << (Geom::areSegmentsIntersect(s1, s2) ? "YES" : "NO") << std::endl;
     return 0;
 }
 
